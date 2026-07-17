@@ -86,6 +86,9 @@ export class PrHighlightController implements vscode.Disposable {
     this.scm = vscode.scm.createSourceControl('prGlow', 'PR Glow', vscode.Uri.file(repoRoot));
     this.scm.inputBox.visible = false;
     this.scm.count = 0;
+    // Register once; the callback reads live state. The workbench re-queries
+    // it whenever any SCM's resources change (every git operation), so
+    // answers stay fresh after commits and checkouts without re-registering.
     this.scm.quickDiffProvider = {
       provideOriginalResource: (uri) => this.baseUriFor(uri),
     };
@@ -291,6 +294,11 @@ export class PrHighlightController implements vscode.Disposable {
       this.ensureScm(repoRoot);
     }
     this.decorator.setChanges(pr ? repoRoot : undefined, this.changes, pr);
+  }
+
+  /** Test hook: the quick-diff original-resource URI for a file, if any. */
+  getBaseUriForTests(uri: vscode.Uri): vscode.Uri | undefined {
+    return this.baseUriFor(uri);
   }
 
   /** State snapshot for integration tests. */
