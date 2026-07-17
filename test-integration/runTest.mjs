@@ -27,7 +27,7 @@ function getJson(url) {
           path: `${u.pathname}${u.search}`,
           family: 4,
           timeout: 30000,
-          headers: { Accept: 'application/json', 'User-Agent': 'pr-gutter-highlight-test' },
+          headers: { Accept: 'application/json', 'User-Agent': 'pr-glow-test' },
         },
         (res) => {
           const chunks = [];

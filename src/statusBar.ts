@@ -6,7 +6,7 @@ export class PrStatusBar implements vscode.Disposable {
 
   constructor() {
     this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 90);
-    this.item.command = 'prGutterHighlight.openPr';
+    this.item.command = 'prGlow.openPr';
   }
 
   setPr(pr: PullRequest | undefined): void {

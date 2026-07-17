@@ -1,6 +1,6 @@
 {
-  "name": "pr-gutter-highlight",
-  "displayName": "PR Gutter Highlight",
+  "name": "pr-glow",
+  "displayName": "PR Glow",
   "description": "JetBrains-style purple gutter highlighting for lines changed in the active pull request of the checked-out branch. Supports GitHub and Bitbucket Cloud.",
   "version": "0.1.0",
   "publisher": "kwol",
@@ -27,46 +27,46 @@
   "contributes": {
     "commands": [
       {
-        "command": "prGutterHighlight.refresh",
-        "title": "PR Highlight: Refresh"
+        "command": "prGlow.refresh",
+        "title": "PR Glow: Refresh"
       },
       {
-        "command": "prGutterHighlight.setBitbucketCredentials",
-        "title": "PR Highlight: Set Bitbucket Credentials"
+        "command": "prGlow.setBitbucketCredentials",
+        "title": "PR Glow: Set Bitbucket Credentials"
       },
       {
-        "command": "prGutterHighlight.signInGitHub",
-        "title": "PR Highlight: Sign in to GitHub"
+        "command": "prGlow.signInGitHub",
+        "title": "PR Glow: Sign in to GitHub"
       },
       {
-        "command": "prGutterHighlight.openPr",
-        "title": "PR Highlight: Open Pull Request in Browser"
+        "command": "prGlow.openPr",
+        "title": "PR Glow: Open Pull Request in Browser"
       }
     ],
     "configuration": {
-      "title": "PR Gutter Highlight",
+      "title": "PR Glow",
       "properties": {
-        "prGutterHighlight.enabled": {
+        "prGlow.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable PR gutter highlighting."
         },
-        "prGutterHighlight.gutterColor.dark": {
+        "prGlow.gutterColor.dark": {
           "type": "string",
           "default": "#A371F7",
           "description": "Gutter marker color used with dark themes."
         },
-        "prGutterHighlight.gutterColor.light": {
+        "prGlow.gutterColor.light": {
           "type": "string",
           "default": "#8250DF",
           "description": "Gutter marker color used with light themes."
         },
-        "prGutterHighlight.githubEnterpriseUrl": {
+        "prGlow.githubEnterpriseUrl": {
           "type": "string",
           "default": "",
           "description": "Base URL of your GitHub Enterprise instance (e.g. https://github.mycompany.com). Leave empty for github.com."
         },
-        "prGutterHighlight.remoteName": {
+        "prGlow.remoteName": {
           "type": "string",
           "default": "origin",
           "description": "Git remote used to detect the hosting provider and pull requests."
@@ -75,7 +75,7 @@
     },
     "colors": [
       {
-        "id": "prGutterHighlight.overviewRulerColor",
+        "id": "prGlow.overviewRulerColor",
         "description": "Overview ruler color for lines changed in the active pull request.",
         "defaults": {
           "dark": "#A371F799",

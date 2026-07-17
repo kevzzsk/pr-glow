@@ -32,7 +32,7 @@ export class BitbucketProvider implements PrProvider {
   private headers(): Record<string, string> {
     const h: Record<string, string> = {
       Accept: 'application/json',
-      'User-Agent': 'pr-gutter-highlight',
+      'User-Agent': 'pr-glow',
     };
     if (this.opts.username && this.opts.appPassword) {
       const basic = Buffer.from(`${this.opts.username}:${this.opts.appPassword}`).toString('base64');

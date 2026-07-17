@@ -17,12 +17,12 @@ export class GutterDecorator implements vscode.Disposable {
   }
 
   private createDecorationType(): vscode.TextEditorDecorationType {
-    const cfg = vscode.workspace.getConfiguration('prGutterHighlight');
+    const cfg = vscode.workspace.getConfiguration('prGlow');
     const darkColor = cfg.get<string>('gutterColor.dark', '#A371F7');
     const lightColor = cfg.get<string>('gutterColor.light', '#8250DF');
     return vscode.window.createTextEditorDecorationType({
       gutterIconSize: 'cover',
-      overviewRulerColor: new vscode.ThemeColor('prGutterHighlight.overviewRulerColor'),
+      overviewRulerColor: new vscode.ThemeColor('prGlow.overviewRulerColor'),
       overviewRulerLane: vscode.OverviewRulerLane.Left,
       dark: { gutterIconPath: gutterIconUri(darkColor) },
       light: { gutterIconPath: gutterIconUri(lightColor) },

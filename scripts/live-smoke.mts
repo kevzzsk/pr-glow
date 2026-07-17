@@ -21,7 +21,7 @@ const GITHUB_CANDIDATES = [
 async function githubSmoke(): Promise<void> {
   for (const [owner, repo] of GITHUB_CANDIDATES) {
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=open&per_page=30`, {
-      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'pr-gutter-highlight-smoke' },
+      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'pr-glow-smoke' },
     });
     if (!res.ok) continue;
     const prs = (await res.json()) as Array<{
@@ -49,14 +49,14 @@ async function bitbucketSmoke(): Promise<void> {
   for (const workspace of ['atlassian', 'blender', 'pypy']) {
     const reposRes = await fetch(
       `https://api.bitbucket.org/2.0/repositories/${workspace}?sort=-updated_on&pagelen=20`,
-      { headers: { Accept: 'application/json', 'User-Agent': 'pr-gutter-highlight-smoke' } },
+      { headers: { Accept: 'application/json', 'User-Agent': 'pr-glow-smoke' } },
     );
     if (!reposRes.ok) continue;
     const repos = (await reposRes.json()) as { values?: Array<{ slug: string }> };
     for (const { slug } of repos.values ?? []) {
       const prsRes = await fetch(
         `https://api.bitbucket.org/2.0/repositories/${workspace}/${slug}/pullrequests?state=OPEN&pagelen=5`,
-        { headers: { Accept: 'application/json', 'User-Agent': 'pr-gutter-highlight-smoke' } },
+        { headers: { Accept: 'application/json', 'User-Agent': 'pr-glow-smoke' } },
       );
       if (!prsRes.ok) continue;
       const prs = (await prsRes.json()) as {
