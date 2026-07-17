@@ -1,86 +1,89 @@
 # PR Glow
 
-JetBrains IDEA-style pull request highlighting for VS Code. When you check out a branch that has an **open pull request**, every line added or modified in that PR gets a **purple marker in the editor gutter** — just like IntelliJ's review stripe. Works with **GitHub** (including github.com and a configurable Enterprise host) and **Bitbucket Cloud**.
+Purple gutter highlights for the lines changed in your branch's open pull request. Works with GitHub and Bitbucket Cloud.
 
-> Screenshot/GIF placeholder — add a capture of the purple gutter stripe on a PR branch here.
+Check out a branch. If it has an open PR, PR Glow marks every line that PR added or changed with a purple stripe in the gutter and shows the PR number in the status bar. Switch to a branch without a PR and the marks go away.
 
-## Features
+> Screenshot placeholder: add a capture of the gutter stripes on a PR branch.
 
-- **Automatic PR detection** — checkout a branch, and if it has an open PR, highlights appear; no clicking around
-- **JetBrains-style purple gutter stripes** on every line the PR added or modified, with dark/light theme variants
-- **GitHub + Bitbucket Cloud** support, inferred from your git remote (GitHub Enterprise via one setting)
-- **Offline-friendly** — changed lines come from local `git diff`, with the provider's diff API as fallback
-- **Status bar PR item** — see the PR number at a glance, click to open it in the browser
-- **Overview ruler marks** so changed regions are visible in the scrollbar
+## Install
 
-## Installation
-
-Not yet on the Marketplace — install from the packaged `.vsix`:
+Not on the Marketplace yet, so build it from source:
 
 ```bash
+git clone https://github.com/kevzzsk/pr-glow.git
+cd pr-glow
 npm install
 npm run package
 code --install-extension pr-glow-0.1.0.vsix
 ```
 
-Or press **F5** with this folder open in VS Code to try it in the Extension Development Host.
-
-## How it works
-
-1. On startup, on every branch checkout (`.git/HEAD` is watched), and on manual refresh, the extension reads your repo's remote (`origin` by default).
-2. The remote URL determines the provider (github.com / Bitbucket Cloud / GitHub Enterprise).
-3. It asks the provider's API for an open PR whose **source branch** matches your checked-out branch.
-4. Changed lines are computed **locally** with `git diff --unified=0 <merge-base> HEAD` against the PR's target branch — so highlights work offline once the target ref is fetched. If the target ref can't be resolved locally, it falls back to the provider's diff API.
-5. Added/modified lines get a purple gutter stripe plus an overview-ruler mark; a status bar item shows the PR number (click to open it in the browser).
-
-Highlights clear automatically when you switch to a branch with no open PR, or when the PR is merged/closed (on the next refresh).
+Or open the folder in VS Code and press F5 to try it in the Extension Development Host.
 
 ## Setup
 
 ### GitHub
 
-Nothing to configure for public repos. For private repos, run **`PR Glow: Sign in to GitHub`** from the command palette — this uses VS Code's built-in GitHub authentication (no token pasting).
+Public repos work without any setup. For private repos, run `PR Glow: Sign in to GitHub` from the command palette. This goes through VS Code's built-in GitHub authentication, so there is no token to copy around.
 
-**GitHub Enterprise:** set `prGlow.githubEnterpriseUrl` to your instance base URL, e.g. `https://github.mycompany.com`.
+For GitHub Enterprise, set `prGlow.githubEnterpriseUrl` to your instance URL, for example `https://github.mycompany.com`.
 
 ### Bitbucket Cloud
 
-Run **`PR Glow: Set Bitbucket Credentials`** and enter your Bitbucket username and an [app password / API token](https://support.atlassian.com/bitbucket-cloud/docs/app-passwords/) with **Pull requests: Read** scope. Credentials are stored in VS Code's SecretStorage (your OS keychain), never in settings files.
+Run `PR Glow: Set Bitbucket Credentials` and enter your Bitbucket username and an [app password](https://support.atlassian.com/bitbucket-cloud/docs/app-passwords/) with the "Pull requests: Read" scope. Credentials are stored in VS Code's SecretStorage (your OS keychain), never in settings files.
+
+## How it works
+
+1. On startup, on every branch checkout (the extension watches `.git/HEAD`), and on manual refresh, PR Glow reads your repo's remote (`origin` by default).
+2. The remote URL decides the provider: github.com, Bitbucket Cloud, or your configured GitHub Enterprise host.
+3. It asks the provider's API for an open PR whose source branch matches your checked-out branch.
+4. Changed lines come from a local `git diff` against the merge-base with the PR's target branch, so highlights keep working offline once the target ref is fetched. If the ref can't be resolved locally, it falls back to the provider's diff API.
+5. Added and modified lines get a purple gutter stripe and an overview ruler mark. The status bar shows the PR number; click it to open the PR in your browser.
 
 ## Commands
 
-| Command | Description |
+| Command | What it does |
 |---|---|
 | `PR Glow: Refresh` | Re-detect the PR and recompute highlights |
 | `PR Glow: Sign in to GitHub` | Authenticate via VS Code's GitHub provider |
-| `PR Glow: Set Bitbucket Credentials` | Store Bitbucket username + app password in SecretStorage |
-| `PR Glow: Open Pull Request in Browser` | Open the detected PR (also: click the status bar item) |
+| `PR Glow: Set Bitbucket Credentials` | Store your Bitbucket username and app password |
+| `PR Glow: Open Pull Request in Browser` | Open the detected PR (same as clicking the status bar item) |
 
-## Configuration
+## Settings
 
 | Setting | Default | Description |
 |---|---|---|
 | `prGlow.enabled` | `true` | Master switch |
-| `prGlow.gutterColor.dark` | `#A371F7` | Gutter stripe color in dark themes |
-| `prGlow.gutterColor.light` | `#8250DF` | Gutter stripe color in light themes |
-| `prGlow.githubEnterpriseUrl` | `""` | GitHub Enterprise base URL (empty = github.com) |
-| `prGlow.remoteName` | `origin` | Git remote used for provider + PR detection |
+| `prGlow.gutterColor.dark` | `#A371F7` | Stripe color in dark themes |
+| `prGlow.gutterColor.light` | `#8250DF` | Stripe color in light themes |
+| `prGlow.githubEnterpriseUrl` | `""` | GitHub Enterprise base URL, empty for github.com |
+| `prGlow.remoteName` | `origin` | Git remote used for provider and PR detection |
 
-The overview-ruler color is themable via `workbench.colorCustomizations` with the color id `prGlow.overviewRulerColor`.
+The overview ruler color can be themed through `workbench.colorCustomizations` with the color id `prGlow.overviewRulerColor`.
 
 ## Development
 
 ```bash
 npm install
-npm test          # unit tests (vitest)
-npm run compile   # typecheck + bundle to dist/
-npm run package   # build the .vsix
+npm test                 # unit tests (vitest)
+npm run test:activation  # integration tests inside a real VS Code instance
+npm run smoke            # live read-only check against public GitHub/Bitbucket APIs
+npm run compile          # typecheck + bundle
+npm run package          # build the .vsix
 ```
 
-Press **F5** in VS Code to launch the Extension Development Host. See `TESTING.md` in the repo for the manual verification checklist.
+The integration suite launches VS Code three times: once in a plain folder to verify activation, then twice against fixture repos that point at real public PRs (one GitHub, one Bitbucket) to verify detection end to end. `TESTING.md` tracks what still needs a manual pass.
 
-## Limitations (v1)
+## Known limitations
 
-- Single-root focus: the first workspace folder that is a git repository is used.
-- Fork PRs where the head repo differs from `origin` may not be detected (detection matches `owner:branch`).
-- Refresh is event-driven (checkout, config change, manual command); PR state changes made on the server are picked up on the next refresh, not by polling.
+- Uses the first workspace folder that is a git repository.
+- PRs from forks may not be detected, since matching is done on `owner:branch`.
+- Refresh happens on checkout, on config changes, and via the refresh command. There is no background polling, so a PR opened or merged on the server shows up on the next refresh.
+
+## Contributing
+
+Issues and pull requests are welcome. Run `npm test` before submitting, and if you touched the provider or git logic, run `npm run test:activation` too.
+
+## License
+
+[MIT](LICENSE)

@@ -1,7 +1,7 @@
 {
   "name": "pr-glow",
   "displayName": "PR Glow",
-  "description": "JetBrains-style purple gutter highlighting for lines changed in the active pull request of the checked-out branch. Supports GitHub and Bitbucket Cloud.",
+  "description": "Purple gutter highlights for lines changed in your branch's open pull request. Supports GitHub and Bitbucket Cloud.",
   "version": "0.1.0",
   "publisher": "kwol",
   "license": "MIT",

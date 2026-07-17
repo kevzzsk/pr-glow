@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { FileChanges, LineRange } from './core/diff';
 
-/** IntelliJ-style vertical stripe rendered in the gutter as an SVG data URI. */
+/** Vertical stripe rendered in the gutter as an SVG data URI. */
 function gutterIconUri(color: string): vscode.Uri {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 32" width="12" height="32"><rect x="7" y="0" width="4" height="32" rx="2" fill="${color}"/></svg>`;
   return vscode.Uri.parse(`data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`);
