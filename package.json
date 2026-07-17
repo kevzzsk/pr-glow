@@ -1,0 +1,104 @@
+{
+  "name": "pr-gutter-highlight",
+  "displayName": "PR Gutter Highlight",
+  "description": "JetBrains-style purple gutter highlighting for lines changed in the active pull request of the checked-out branch. Supports GitHub and Bitbucket Cloud.",
+  "version": "0.1.0",
+  "publisher": "kwol",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "pull request",
+    "gutter",
+    "review",
+    "github",
+    "bitbucket",
+    "diff"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "prGutterHighlight.refresh",
+        "title": "PR Highlight: Refresh"
+      },
+      {
+        "command": "prGutterHighlight.setBitbucketCredentials",
+        "title": "PR Highlight: Set Bitbucket Credentials"
+      },
+      {
+        "command": "prGutterHighlight.signInGitHub",
+        "title": "PR Highlight: Sign in to GitHub"
+      },
+      {
+        "command": "prGutterHighlight.openPr",
+        "title": "PR Highlight: Open Pull Request in Browser"
+      }
+    ],
+    "configuration": {
+      "title": "PR Gutter Highlight",
+      "properties": {
+        "prGutterHighlight.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable PR gutter highlighting."
+        },
+        "prGutterHighlight.gutterColor.dark": {
+          "type": "string",
+          "default": "#A371F7",
+          "description": "Gutter marker color used with dark themes."
+        },
+        "prGutterHighlight.gutterColor.light": {
+          "type": "string",
+          "default": "#8250DF",
+          "description": "Gutter marker color used with light themes."
+        },
+        "prGutterHighlight.githubEnterpriseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Base URL of your GitHub Enterprise instance (e.g. https://github.mycompany.com). Leave empty for github.com."
+        },
+        "prGutterHighlight.remoteName": {
+          "type": "string",
+          "default": "origin",
+          "description": "Git remote used to detect the hosting provider and pull requests."
+        }
+      }
+    },
+    "colors": [
+      {
+        "id": "prGutterHighlight.overviewRulerColor",
+        "description": "Overview ruler color for lines changed in the active pull request.",
+        "defaults": {
+          "dark": "#A371F799",
+          "light": "#8250DF99",
+          "highContrast": "#A371F7"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "npm run typecheck && node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "package": "vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "1.85.0",
+    "@vscode/vsce": "^3.3.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
