@@ -4,6 +4,7 @@ import { PrHighlightController } from './controller';
 export interface ExtensionTestApi {
   refresh(reason: string): Promise<void>;
   getState(): ReturnType<PrHighlightController['getStateForTests']>;
+  getBaseUri(uri: vscode.Uri): vscode.Uri | undefined;
 }
 
 export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
@@ -22,6 +23,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   return {
     refresh: (reason) => controller.refresh(reason),
     getState: () => controller.getStateForTests(),
+    getBaseUri: (uri) => controller.getBaseUriForTests(uri),
   };
 }
 
