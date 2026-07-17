@@ -36,7 +36,7 @@ Run `PR Glow: Set Bitbucket Credentials` and enter your Bitbucket username and a
 
 ## How it works
 
-1. On startup, on every branch checkout (the extension watches `.git/HEAD`), and on manual refresh, PR Glow reads your repo's remote (`origin` by default).
+1. On startup, on every branch checkout or new commit (the extension watches `.git/HEAD` and `.git/logs/HEAD`), and on manual refresh, PR Glow reads your repo's remote (`origin` by default).
 2. The remote URL decides the provider: github.com, Bitbucket Cloud, or your configured GitHub Enterprise host.
 3. It asks the provider's API for an open PR whose source branch matches your checked-out branch.
 4. Changed lines come from a local `git diff` against the merge-base with the PR's target branch, so highlights keep working offline once the target ref is fetched. If the ref can't be resolved locally, it falls back to the provider's diff API.

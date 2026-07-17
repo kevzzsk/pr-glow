@@ -31,6 +31,7 @@ export class PrHighlightController implements vscode.Disposable {
   private currentPr: PullRequest | undefined;
   private lastChangedFileCount = 0;
   private refreshChain: Promise<void> = Promise.resolve();
+  private refreshTimer: ReturnType<typeof setTimeout> | undefined;
   private repoRoot: string | undefined;
   private baseCommit: string | undefined;
   private changes: FileChanges = new Map();
@@ -104,15 +105,32 @@ export class PrHighlightController implements vscode.Disposable {
       }),
     );
 
-    // Watch .git/HEAD in each workspace folder to detect branch checkouts.
+    // Watch git state in each workspace folder:
+    //  - .git/HEAD changes on branch checkout
+    //  - .git/logs/HEAD is appended on every HEAD move (commit, merge, reset,
+    //    pull), which .git/HEAD alone misses
     for (const folder of vscode.workspace.workspaceFolders ?? []) {
-      const pattern = new vscode.RelativePattern(folder, '.git/HEAD');
-      const watcher = vscode.workspace.createFileSystemWatcher(pattern);
-      const onHeadChange = () => this.refresh('branch changed (.git/HEAD)');
-      watcher.onDidChange(onHeadChange, undefined, this.disposables);
-      watcher.onDidCreate(onHeadChange, undefined, this.disposables);
-      this.disposables.push(watcher);
+      for (const glob of ['.git/HEAD', '.git/logs/HEAD']) {
+        const watcher = vscode.workspace.createFileSystemWatcher(
+          new vscode.RelativePattern(folder, glob),
+        );
+        const onGitChange = () => this.scheduleRefresh(`git state changed (${glob})`);
+        watcher.onDidChange(onGitChange, undefined, this.disposables);
+        watcher.onDidCreate(onGitChange, undefined, this.disposables);
+        this.disposables.push(watcher);
+      }
     }
+  }
+
+  /** Debounced refresh: a checkout or commit touches several git files at once. */
+  private scheduleRefresh(reason: string): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+    this.refreshTimer = setTimeout(() => {
+      this.refreshTimer = undefined;
+      void this.refresh(reason);
+    }, 400);
   }
 
   /** Serialized refresh: runs after any in-flight refresh; the returned promise resolves when THIS refresh has completed. */
@@ -349,6 +367,9 @@ export class PrHighlightController implements vscode.Disposable {
   }
 
   dispose(): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
     for (const d of this.disposables) {
       d.dispose();
     }
