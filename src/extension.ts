@@ -1,7 +1,12 @@
 import * as vscode from 'vscode';
 import { PrHighlightController } from './controller';
 
-export function activate(context: vscode.ExtensionContext): void {
+export interface ExtensionTestApi {
+  refresh(reason: string): Promise<void>;
+  getState(): ReturnType<PrHighlightController['getStateForTests']>;
+}
+
+export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
   const controller = new PrHighlightController(context);
   context.subscriptions.push(
     controller,
@@ -13,6 +18,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('prGutterHighlight.openPr', () => controller.commandOpenPr()),
   );
   void controller.refresh('activation');
+  return {
+    refresh: (reason) => controller.refresh(reason),
+    getState: () => controller.getStateForTests(),
+  };
 }
 
 export function deactivate(): void {}

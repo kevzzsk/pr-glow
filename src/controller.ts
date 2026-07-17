@@ -18,8 +18,8 @@ export class PrHighlightController implements vscode.Disposable {
   private readonly output: vscode.LogOutputChannel;
   private readonly disposables: vscode.Disposable[] = [];
   private currentPr: PullRequest | undefined;
-  private refreshing = false;
-  private refreshQueued = false;
+  private lastChangedFileCount = 0;
+  private refreshChain: Promise<void> = Promise.resolve();
 
   constructor(private readonly context: vscode.ExtensionContext) {
     this.output = vscode.window.createOutputChannel('PR Gutter Highlight', { log: true });
@@ -51,25 +51,18 @@ export class PrHighlightController implements vscode.Disposable {
     }
   }
 
-  /** Serialized refresh: a call during a running refresh queues exactly one follow-up. */
-  async refresh(reason: string): Promise<void> {
-    if (this.refreshing) {
-      this.refreshQueued = true;
-      return;
-    }
-    this.refreshing = true;
-    try {
-      this.output.info(`refresh: ${reason}`);
-      await this.doRefresh();
-    } catch (err) {
-      this.output.error(`refresh failed: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      this.refreshing = false;
-      if (this.refreshQueued) {
-        this.refreshQueued = false;
-        void this.refresh('queued follow-up');
+  /** Serialized refresh: runs after any in-flight refresh; the returned promise resolves when THIS refresh has completed. */
+  refresh(reason: string): Promise<void> {
+    const run = this.refreshChain.then(async () => {
+      try {
+        this.output.info(`refresh: ${reason}`);
+        await this.doRefresh();
+      } catch (err) {
+        this.output.error(`refresh failed: ${err instanceof Error ? err.message : String(err)}`);
       }
-    }
+    });
+    this.refreshChain = run;
+    return run;
   }
 
   private async doRefresh(): Promise<void> {
@@ -201,8 +194,14 @@ export class PrHighlightController implements vscode.Disposable {
 
   private setPr(pr: PullRequest | undefined, repoRoot: string | undefined, changes: FileChanges): void {
     this.currentPr = pr;
+    this.lastChangedFileCount = pr ? changes.size : 0;
     this.statusBar.setPr(pr);
     this.decorator.setChanges(pr ? repoRoot : undefined, pr ? changes : new Map());
+  }
+
+  /** State snapshot for integration tests. */
+  getStateForTests(): { pr: PullRequest | undefined; changedFileCount: number } {
+    return { pr: this.currentPr, changedFileCount: this.lastChangedFileCount };
   }
 
   // ---- commands ----

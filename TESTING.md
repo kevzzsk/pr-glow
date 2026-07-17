@@ -3,7 +3,7 @@
 Automated verification already in place:
 
 - `npm test` — 35 unit tests: remote URL parsing, branch→PR matching against mocked GitHub/Bitbucket API responses, unified-diff→line-range mapping, and the IPv4-fallback fetch (local http server, redirects, error paths).
-- `npm run test:activation` — launches real VS Code with the extension, asserts it activates, all four commands are registered, and `refresh` resolves cleanly in a non-git workspace. ✅ passed 2026-07-17 (local VS Code install).
+- `npm run test:activation` — launches real VS Code three times: (1) activation + command registration + clean refresh in a non-git workspace; (2) **GitHub e2e**: a fixture checkout of a real public repo branch with a real open PR — asserts the PR is detected by branch and changed lines are computed (via the provider diff-API fallback); (3) same **Bitbucket Cloud e2e**. ✅ all three passed 2026-07-17 (local VS Code install; e.g. microsoft/vscode PR #326311, atlassian/dc-platform PR #5898).
 - `npm run smoke` — live read-only round trip against real public repos: discovers an open PR, verifies `findOpenPr()` locates it by branch, fetches and parses the diff. ✅ passed 2026-07-17 for **GitHub** (microsoft/vscode) and **Bitbucket Cloud** (atlassian/dc-platform).
 
 The items below require a live editor and real repos/PRs.
@@ -24,7 +24,7 @@ Prereqs: a github.com repo with a branch that has an open PR against `main`.
 
 | # | Step | Expected | Status |
 |---|---|---|---|
-| 4 | Open the repo with the PR branch checked out | Status bar shows `PR #<n>`; files in the PR diff show purple gutter stripes on added/modified lines | ⬜ |
+| 4 | Open the repo with the PR branch checked out | Status bar shows `PR #<n>`; files in the PR diff show purple gutter stripes on added/modified lines | ✅ detection + changed-line computation (automated e2e); ⬜ visual stripe rendering |
 | 5 | Open a file NOT in the PR diff | No gutter stripes | ⬜ |
 | 6 | `git checkout main` in a terminal (while host is open) | Highlights and status bar clear within a few seconds (`.git/HEAD` watcher) | ⬜ |
 | 7 | Check the PR branch out again | Highlights return | ⬜ |
@@ -39,7 +39,7 @@ Prereqs: a bitbucket.org repo with an open PR; an app password / API token with 
 | # | Step | Expected | Status |
 |---|---|---|---|
 | 11 | Run "PR Highlight: Set Bitbucket Credentials", enter username + app password | "credentials saved" toast; refresh runs | 🔒 |
-| 12 | Open the Bitbucket repo with the PR branch checked out | Status bar shows PR; purple stripes on PR-changed lines | 🔒 |
+| 12 | Open the Bitbucket repo with the PR branch checked out | Status bar shows PR; purple stripes on PR-changed lines | ✅ detection + changed-line computation (automated e2e, public repo unauthenticated); ⬜ visual; 🔒 private-repo auth |
 | 13 | Checkout a branch with no PR | Highlights clear | 🔒 |
 
 ## Theming
@@ -51,6 +51,6 @@ Prereqs: a bitbucket.org repo with an open PR; an app password / API token with 
 
 ## Known gaps
 
-- **In-editor visual verification** (purple stripes rendering on a real PR branch, items 4–10 and 12–15) has not been performed — it needs a human at the editor with a repo that has an open PR. Provider round trips are live-verified via `npm run smoke`; activation and the non-git path are verified via `npm run test:activation`.
+- **Visual verification** (the purple stripes actually rendering in the gutter, plus checkout-watcher and theming items 5–10, 13–15) needs a human at the editor. Everything up to the decoration call — PR detection, diff computation, per-file range mapping — is covered by the automated e2e scenarios in `npm run test:activation`.
 - **Credentialed flows** (private GitHub repo sign-in, Bitbucket app-password auth) are blocked on real credentials. The auth header construction for both is covered by unit tests.
 - **Environment note:** on VPNs where api.bitbucket.org's IPv6 route blackholes, plain `fetch` times out; the extension's `resilientFetch` retries over IPv4 (this exact failure was reproduced and fixed during development on this machine).
