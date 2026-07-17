@@ -20,6 +20,8 @@ code --install-extension pr-glow-0.1.0.vsix
 
 Or open the folder in VS Code and press F5 to try it in the Extension Development Host.
 
+Test addition
+
 ## Setup
 
 ### GitHub
@@ -43,23 +45,23 @@ Run `PR Glow: Set Bitbucket Credentials` and enter your Bitbucket username and a
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `PR Glow: Refresh` | Re-detect the PR and recompute highlights |
-| `PR Glow: Sign in to GitHub` | Authenticate via VS Code's GitHub provider |
-| `PR Glow: Set Bitbucket Credentials` | Store your Bitbucket username and app password |
+| Command                                 | What it does                                                |
+| --------------------------------------- | ----------------------------------------------------------- |
+| `PR Glow: Refresh`                      | Re-detect the PR and recompute highlights                   |
+| `PR Glow: Sign in to GitHub`            | Authenticate via VS Code's GitHub provider                  |
+| `PR Glow: Set Bitbucket Credentials`    | Store your Bitbucket username and app password              |
 | `PR Glow: Open Pull Request in Browser` | Open the detected PR (same as clicking the status bar item) |
-| `PR Glow: Open File Diff vs PR Base` | Diff the current file against its content at the PR base |
+| `PR Glow: Open File Diff vs PR Base`    | Diff the current file against its content at the PR base    |
 
 ## Settings
 
-| Setting | Default | Description |
-|---|---|---|
-| `prGlow.enabled` | `true` | Master switch |
-| `prGlow.gutterColor.dark` | `#A371F7` | Stripe color in dark themes |
-| `prGlow.gutterColor.light` | `#8250DF` | Stripe color in light themes |
-| `prGlow.githubEnterpriseUrl` | `""` | GitHub Enterprise base URL, empty for github.com |
-| `prGlow.remoteName` | `origin` | Git remote used for provider and PR detection |
+| Setting                      | Default   | Description                                      |
+| ---------------------------- | --------- | ------------------------------------------------ |
+| `prGlow.enabled`             | `true`    | Master switch                                    |
+| `prGlow.gutterColor.dark`    | `#A371F7` | Stripe color in dark themes                      |
+| `prGlow.gutterColor.light`   | `#8250DF` | Stripe color in light themes                     |
+| `prGlow.githubEnterpriseUrl` | `""`      | GitHub Enterprise base URL, empty for github.com |
+| `prGlow.remoteName`          | `origin`  | Git remote used for provider and PR detection    |
 
 The overview ruler color can be themed through `workbench.colorCustomizations` with the color id `prGlow.overviewRulerColor`.
 
