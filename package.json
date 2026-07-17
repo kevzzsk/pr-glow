@@ -91,11 +91,14 @@
     "watch": "node esbuild.mjs --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:activation": "npm run compile && node test-integration/runTest.mjs",
+    "smoke": "esbuild scripts/live-smoke.mts --bundle --platform=node --format=esm --outfile=dist/live-smoke.mjs --log-level=warning && node dist/live-smoke.mjs",
     "package": "vsce package --allow-missing-repository"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "1.85.0",
+    "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.3.0",
     "esbuild": "^0.24.0",
     "typescript": "^5.6.0",

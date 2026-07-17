@@ -1,6 +1,12 @@
 # Manual test checklist
 
-Automated unit tests (`npm test`) cover remote URL parsing, branch→PR matching against mocked GitHub/Bitbucket API responses, and unified-diff→line-range mapping. The items below require a live editor and real repos/PRs.
+Automated verification already in place:
+
+- `npm test` — 35 unit tests: remote URL parsing, branch→PR matching against mocked GitHub/Bitbucket API responses, unified-diff→line-range mapping, and the IPv4-fallback fetch (local http server, redirects, error paths).
+- `npm run test:activation` — launches real VS Code with the extension, asserts it activates, all four commands are registered, and `refresh` resolves cleanly in a non-git workspace. ✅ passed 2026-07-17 (local VS Code install).
+- `npm run smoke` — live read-only round trip against real public repos: discovers an open PR, verifies `findOpenPr()` locates it by branch, fetches and parses the diff. ✅ passed 2026-07-17 for **GitHub** (microsoft/vscode) and **Bitbucket Cloud** (atlassian/dc-platform).
+
+The items below require a live editor and real repos/PRs.
 
 Status legend: ✅ verified · ⬜ not yet verified · 🔒 blocked on credentials/live PR
 
@@ -8,8 +14,8 @@ Status legend: ✅ verified · ⬜ not yet verified · 🔒 blocked on credentia
 
 | # | Step | Expected | Status |
 |---|---|---|---|
-| 1 | `npm run compile`, then F5 to launch the Extension Development Host | Host launches; "PR Gutter Highlight" output channel exists (View → Output) | ⬜ |
-| 2 | Open a folder that is not a git repo | Output logs "no git repository in workspace"; no errors | ⬜ |
+| 1 | `npm run compile`, then F5 to launch the Extension Development Host | Host launches; "PR Gutter Highlight" output channel exists (View → Output) | ✅ (automated: `npm run test:activation`) |
+| 2 | Open a folder that is not a git repo | Output logs "no git repository in workspace"; no errors | ✅ (automated: activation test uses a non-git workspace) |
 | 3 | Open a git repo with an unsupported remote (e.g. GitLab) | Output logs "unsupported remote"; no errors | ⬜ |
 
 ## GitHub end-to-end
@@ -45,4 +51,6 @@ Prereqs: a bitbucket.org repo with an open PR; an app password / API token with 
 
 ## Known gaps
 
-- End-to-end verification against live GitHub/Bitbucket PRs has not been performed in this environment (no editor UI / credentials available to the build loop). All provider request/response logic is covered by mocked unit tests.
+- **In-editor visual verification** (purple stripes rendering on a real PR branch, items 4–10 and 12–15) has not been performed — it needs a human at the editor with a repo that has an open PR. Provider round trips are live-verified via `npm run smoke`; activation and the non-git path are verified via `npm run test:activation`.
+- **Credentialed flows** (private GitHub repo sign-in, Bitbucket app-password auth) are blocked on real credentials. The auth header construction for both is covered by unit tests.
+- **Environment note:** on VPNs where api.bitbucket.org's IPv6 route blackholes, plain `fetch` times out; the extension's `resilientFetch` retries over IPv4 (this exact failure was reproduced and fixed during development on this machine).

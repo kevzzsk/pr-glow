@@ -1,3 +1,4 @@
+import { resilientFetch } from './resilientFetch';
 import { FetchLike, PrProvider, PullRequest } from './types';
 
 export interface GitHubProviderOptions {
@@ -27,7 +28,7 @@ export class GitHubProvider implements PrProvider {
     this.apiBase = opts.enterpriseBaseUrl
       ? `${opts.enterpriseBaseUrl.replace(/\/+$/, '')}/api/v3`
       : 'https://api.github.com';
-    this.fetchImpl = opts.fetchImpl ?? (globalThis.fetch as unknown as FetchLike);
+    this.fetchImpl = opts.fetchImpl ?? resilientFetch;
   }
 
   private headers(extra?: Record<string, string>): Record<string, string> {

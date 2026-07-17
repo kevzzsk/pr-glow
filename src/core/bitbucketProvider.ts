@@ -1,3 +1,4 @@
+import { resilientFetch } from './resilientFetch';
 import { FetchLike, PrProvider, PullRequest } from './types';
 
 export interface BitbucketProviderOptions {
@@ -25,7 +26,7 @@ export class BitbucketProvider implements PrProvider {
   private readonly fetchImpl: FetchLike;
 
   constructor(private readonly opts: BitbucketProviderOptions) {
-    this.fetchImpl = opts.fetchImpl ?? (globalThis.fetch as unknown as FetchLike);
+    this.fetchImpl = opts.fetchImpl ?? resilientFetch;
   }
 
   private headers(): Record<string, string> {
