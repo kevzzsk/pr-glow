@@ -4,7 +4,7 @@ Purple gutter highlights for the lines changed in your branch's open pull reques
 
 Check out a branch. If it has an open PR, PR Glow marks every line that PR added or changed with a purple stripe in the gutter and shows the PR number in the status bar. Switch to a branch without a PR and the marks go away.
 
-> Screenshot placeholder: add a capture of the gutter stripes on a PR branch.
+> Screenshot placeholder: capture the stripes on the test/gutter-demo branch while its PR is open.
 
 ## Install
 
