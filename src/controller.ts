@@ -2,7 +2,15 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { BitbucketProvider } from './core/bitbucketProvider';
 import { FileChanges, parseUnifiedDiff } from './core/diff';
-import { diffAgainstTarget, getCurrentBranch, getRemoteUrl, getRepoRoot, GitError } from './core/git';
+import {
+  diffAgainstBase,
+  getCurrentBranch,
+  getFileAtCommit,
+  getMergeBase,
+  getRemoteUrl,
+  getRepoRoot,
+  GitError,
+} from './core/git';
 import { GitHubProvider } from './core/githubProvider';
 import { parseRemoteUrl } from './core/remoteParse';
 import { PrProvider, PullRequest } from './core/types';
@@ -12,6 +20,9 @@ import { PrStatusBar } from './statusBar';
 const BITBUCKET_USERNAME_KEY = 'prGlow.bitbucket.username';
 const BITBUCKET_APP_PASSWORD_KEY = 'prGlow.bitbucket.appPassword';
 
+/** URI scheme under which PR-base file contents are served for diffing. */
+export const BASE_SCHEME = 'prglow-base';
+
 export class PrHighlightController implements vscode.Disposable {
   private readonly decorator = new GutterDecorator();
   private readonly statusBar = new PrStatusBar();
@@ -20,11 +31,64 @@ export class PrHighlightController implements vscode.Disposable {
   private currentPr: PullRequest | undefined;
   private lastChangedFileCount = 0;
   private refreshChain: Promise<void> = Promise.resolve();
+  private repoRoot: string | undefined;
+  private baseCommit: string | undefined;
+  private changes: FileChanges = new Map();
+  private scm: vscode.SourceControl | undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {
     this.output = vscode.window.createOutputChannel('PR Glow', { log: true });
     this.disposables.push(this.decorator, this.statusBar, this.output);
+    this.disposables.push(
+      vscode.workspace.registerTextDocumentContentProvider(BASE_SCHEME, {
+        provideTextDocumentContent: async (uri) => {
+          const params = new URLSearchParams(uri.query);
+          const repo = params.get('repo');
+          const commit = params.get('commit');
+          const rel = params.get('path');
+          if (!repo || !commit || !rel) {
+            return '';
+          }
+          return (await getFileAtCommit(repo, commit, rel)) ?? '';
+        },
+      }),
+    );
     this.registerListeners();
+  }
+
+  /**
+   * URI serving `uri`'s content at the PR merge-base, or undefined when the
+   * file isn't part of the PR diff (or no local base is available). Used both
+   * by the quick diff provider (click a gutter mark → inline diff peek, like
+   * the built-in git decorations) and by the openFileDiff command.
+   */
+  private baseUriFor(uri: vscode.Uri): vscode.Uri | undefined {
+    if (!this.repoRoot || !this.baseCommit || uri.scheme !== 'file') {
+      return undefined;
+    }
+    const prefix = this.repoRoot.endsWith('/') ? this.repoRoot : `${this.repoRoot}/`;
+    if (!uri.fsPath.startsWith(prefix)) {
+      return undefined;
+    }
+    const rel = uri.fsPath.slice(prefix.length);
+    if (!this.changes.has(rel)) {
+      return undefined;
+    }
+    const query = new URLSearchParams({ repo: this.repoRoot, commit: this.baseCommit, path: rel });
+    return uri.with({ scheme: BASE_SCHEME, query: query.toString() });
+  }
+
+  private ensureScm(repoRoot: string): void {
+    if (this.scm) {
+      return;
+    }
+    this.scm = vscode.scm.createSourceControl('prGlow', 'PR Glow', vscode.Uri.file(repoRoot));
+    this.scm.inputBox.visible = false;
+    this.scm.count = 0;
+    this.scm.quickDiffProvider = {
+      provideOriginalResource: (uri) => this.baseUriFor(uri),
+    };
+    this.disposables.push(this.scm);
   }
 
   private registerListeners(): void {
@@ -125,9 +189,9 @@ export class PrHighlightController implements vscode.Disposable {
     }
 
     this.output.info(`found ${pr.provider} PR #${pr.number} "${pr.title}" (${pr.sourceBranch} → ${pr.targetBranch})`);
-    const changes = await this.computeChanges(repoRoot, remoteName, provider, pr);
-    this.output.info(`highlighting ${changes.size} changed file(s)`);
-    this.setPr(pr, repoRoot, changes);
+    const { changes, baseCommit } = await this.computeChanges(repoRoot, remoteName, provider, pr);
+    this.output.info(`highlighting ${changes.size} changed file(s)${baseCommit ? `, quick diff vs ${baseCommit.slice(0, 8)}` : ' (no local base — quick diff unavailable)'}`);
+    this.setPr(pr, repoRoot, changes, baseCommit);
   }
 
   private async computeChanges(
@@ -135,15 +199,16 @@ export class PrHighlightController implements vscode.Disposable {
     remoteName: string,
     provider: PrProvider,
     pr: PullRequest,
-  ): Promise<FileChanges> {
+  ): Promise<{ changes: FileChanges; baseCommit?: string }> {
     try {
-      const diff = await diffAgainstTarget(repoRoot, remoteName, pr.targetBranch);
-      return parseUnifiedDiff(diff);
+      const baseCommit = await getMergeBase(repoRoot, remoteName, pr.targetBranch);
+      const diff = await diffAgainstBase(repoRoot, baseCommit);
+      return { changes: parseUnifiedDiff(diff), baseCommit };
     } catch (err) {
       if (err instanceof GitError) {
         this.output.warn(`local diff unavailable (${err.message}); falling back to provider diff API`);
         const diff = await provider.fetchDiff(pr);
-        return parseUnifiedDiff(diff);
+        return { changes: parseUnifiedDiff(diff) };
       }
       throw err;
     }
@@ -192,16 +257,31 @@ export class PrHighlightController implements vscode.Disposable {
     return undefined;
   }
 
-  private setPr(pr: PullRequest | undefined, repoRoot: string | undefined, changes: FileChanges): void {
+  private setPr(
+    pr: PullRequest | undefined,
+    repoRoot: string | undefined,
+    changes: FileChanges,
+    baseCommit?: string,
+  ): void {
     this.currentPr = pr;
-    this.lastChangedFileCount = pr ? changes.size : 0;
+    this.repoRoot = repoRoot;
+    this.changes = pr ? changes : new Map();
+    this.baseCommit = pr ? baseCommit : undefined;
+    this.lastChangedFileCount = this.changes.size;
     this.statusBar.setPr(pr);
-    this.decorator.setChanges(pr ? repoRoot : undefined, pr ? changes : new Map());
+    if (repoRoot) {
+      this.ensureScm(repoRoot);
+    }
+    this.decorator.setChanges(pr ? repoRoot : undefined, this.changes, pr);
   }
 
   /** State snapshot for integration tests. */
-  getStateForTests(): { pr: PullRequest | undefined; changedFileCount: number } {
-    return { pr: this.currentPr, changedFileCount: this.lastChangedFileCount };
+  getStateForTests(): { pr: PullRequest | undefined; changedFileCount: number; quickDiffReady: boolean } {
+    return {
+      pr: this.currentPr,
+      changedFileCount: this.lastChangedFileCount,
+      quickDiffReady: this.baseCommit !== undefined,
+    };
   }
 
   // ---- commands ----
@@ -236,6 +316,28 @@ export class PrHighlightController implements vscode.Disposable {
     await this.context.secrets.store(BITBUCKET_APP_PASSWORD_KEY, appPassword);
     vscode.window.showInformationMessage('PR Glow: Bitbucket credentials saved.');
     await this.refresh('Bitbucket credentials updated');
+  }
+
+  async commandOpenFileDiff(): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || !this.currentPr) {
+      vscode.window.showInformationMessage('PR Glow: no active pull request detected.');
+      return;
+    }
+    const baseUri = this.baseUriFor(editor.document.uri);
+    if (!baseUri) {
+      vscode.window.showInformationMessage(
+        'PR Glow: this file is not part of the PR diff, or the PR base is not available locally.',
+      );
+      return;
+    }
+    const name = path.basename(editor.document.uri.fsPath);
+    await vscode.commands.executeCommand(
+      'vscode.diff',
+      baseUri,
+      editor.document.uri,
+      `${name} (PR #${this.currentPr.number} base ↔ working tree)`,
+    );
   }
 
   async commandOpenPr(): Promise<void> {

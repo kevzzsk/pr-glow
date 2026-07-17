@@ -43,4 +43,11 @@ exports.run = async function run() {
     state.changedFileCount > 0,
     'expected changed files from the provider diff API fallback',
   );
+  if (process.env.PR_EXPECT_QUICKDIFF === '1') {
+    assert.strictEqual(
+      state.quickDiffReady,
+      true,
+      'expected quick diff to be available (local merge-base resolved)',
+    );
+  }
 };
