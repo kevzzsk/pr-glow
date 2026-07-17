@@ -5,6 +5,10 @@
   "version": "0.1.0",
   "publisher": "kwol",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevzzsk/pr-glow.git"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -93,7 +97,7 @@
     "test": "vitest run",
     "test:activation": "npm run compile && node test-integration/runTest.mjs",
     "smoke": "esbuild scripts/live-smoke.mts --bundle --platform=node --format=esm --outfile=dist/live-smoke.mjs --log-level=warning && node dist/live-smoke.mjs",
-    "package": "vsce package --allow-missing-repository"
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
