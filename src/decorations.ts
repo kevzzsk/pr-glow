@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { FileChanges, LineRange } from './core/diff';
+import { PullRequest } from './core/types';
 
 /** Vertical stripe rendered in the gutter as an SVG data URI. */
 function gutterIconUri(color: string): vscode.Uri {
@@ -11,6 +12,7 @@ export class GutterDecorator implements vscode.Disposable {
   private decorationType: vscode.TextEditorDecorationType;
   private changes: FileChanges = new Map();
   private repoRoot: string | undefined;
+  private pr: PullRequest | undefined;
 
   constructor() {
     this.decorationType = this.createDecorationType();
@@ -36,14 +38,27 @@ export class GutterDecorator implements vscode.Disposable {
     this.applyToVisibleEditors();
   }
 
-  setChanges(repoRoot: string | undefined, changes: FileChanges): void {
+  setChanges(repoRoot: string | undefined, changes: FileChanges, pr?: PullRequest): void {
     this.repoRoot = repoRoot;
     this.changes = changes;
+    this.pr = pr;
     this.applyToVisibleEditors();
   }
 
   clear(): void {
     this.setChanges(undefined, new Map());
+  }
+
+  private hoverMessage(): vscode.MarkdownString | undefined {
+    if (!this.pr) {
+      return undefined;
+    }
+    const md = new vscode.MarkdownString(
+      `Changed in [PR #${this.pr.number}](${this.pr.url}): ${this.pr.title}\n\n` +
+        `[Open file diff](command:prGlow.openFileDiff) · click the diff mark next to the line number for an inline peek`,
+    );
+    md.isTrusted = { enabledCommands: ['prGlow.openFileDiff'] };
+    return md;
   }
 
   applyToVisibleEditors(): void {
@@ -54,12 +69,13 @@ export class GutterDecorator implements vscode.Disposable {
 
   applyToEditor(editor: vscode.TextEditor): void {
     const ranges = this.rangesForDocument(editor.document);
+    const hoverMessage = this.hoverMessage();
     editor.setDecorations(
       this.decorationType,
-      ranges.map((r) => {
+      ranges.map((r): vscode.DecorationOptions => {
         const startLine = Math.max(0, r.start - 1);
         const endLine = Math.max(0, Math.min(r.end - 1, editor.document.lineCount - 1));
-        return new vscode.Range(startLine, 0, endLine, 0);
+        return { range: new vscode.Range(startLine, 0, endLine, 0), hoverMessage };
       }),
     );
   }

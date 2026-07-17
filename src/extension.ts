@@ -16,6 +16,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionTestApi {
       controller.commandSetBitbucketCredentials(),
     ),
     vscode.commands.registerCommand('prGlow.openPr', () => controller.commandOpenPr()),
+    vscode.commands.registerCommand('prGlow.openFileDiff', () => controller.commandOpenFileDiff()),
   );
   void controller.refresh('activation');
   return {

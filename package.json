@@ -45,6 +45,10 @@
       {
         "command": "prGlow.openPr",
         "title": "PR Glow: Open Pull Request in Browser"
+      },
+      {
+        "command": "prGlow.openFileDiff",
+        "title": "PR Glow: Open File Diff vs PR Base"
       }
     ],
     "configuration": {

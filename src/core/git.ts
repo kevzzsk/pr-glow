@@ -42,12 +42,12 @@ export async function getRemoteUrl(repoRoot: string, remote: string): Promise<st
 }
 
 /**
- * Unified diff (zero context) of HEAD against the merge-base with the PR target
- * branch. Tries the local remote-tracking ref first; if absent, fetches the
- * target branch once, then retries. Throws GitError if no base can be resolved
- * (caller falls back to the provider's diff API).
+ * Resolve the merge-base of HEAD and the PR target branch. Tries the local
+ * remote-tracking ref first; if absent, fetches the target branch once, then
+ * retries. Throws GitError if no base can be resolved (caller falls back to
+ * the provider's diff API).
  */
-export async function diffAgainstTarget(
+export async function getMergeBase(
   repoRoot: string,
   remote: string,
   targetBranch: string,
@@ -65,8 +65,28 @@ export async function diffAgainstTarget(
   if (!hasRef) {
     throw new GitError(`cannot resolve ${ref}`);
   }
-  const mergeBase = (await git(repoRoot, ['merge-base', 'HEAD', ref])).trim();
+  return (await git(repoRoot, ['merge-base', 'HEAD', ref])).trim();
+}
+
+/** Unified diff (zero context) of HEAD against the given merge-base commit. */
+export async function diffAgainstBase(repoRoot: string, mergeBase: string): Promise<string> {
   return git(repoRoot, ['diff', '--unified=0', '--no-color', '--no-ext-diff', mergeBase, 'HEAD']);
+}
+
+/**
+ * Content of a repo-relative file at the given commit. Returns undefined for
+ * files that don't exist at that commit (e.g. files the PR added).
+ */
+export async function getFileAtCommit(
+  repoRoot: string,
+  commit: string,
+  relPath: string,
+): Promise<string | undefined> {
+  try {
+    return await git(repoRoot, ['show', `${commit}:${relPath}`]);
+  } catch {
+    return undefined;
+  }
 }
 
 async function refExists(repoRoot: string, ref: string): Promise<boolean> {

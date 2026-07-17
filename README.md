@@ -39,6 +39,7 @@ Run `PR Glow: Set Bitbucket Credentials` and enter your Bitbucket username and a
 3. It asks the provider's API for an open PR whose source branch matches your checked-out branch.
 4. Changed lines come from a local `git diff` against the merge-base with the PR's target branch, so highlights keep working offline once the target ref is fetched. If the ref can't be resolved locally, it falls back to the provider's diff API.
 5. Added and modified lines get a purple gutter stripe and an overview ruler mark. The status bar shows the PR number; click it to open the PR in your browser.
+6. PR Glow also registers a quick diff provider, the same mechanism the built-in git gutter uses. Click the diff mark next to a line number to peek the change inline, diffed against the PR base rather than HEAD. Hovering a highlighted line shows a link to a full file diff, also available as `PR Glow: Open File Diff vs PR Base`. Quick diff needs the PR base available locally; when line data comes from the provider's diff API instead, only the stripes show.
 
 ## Commands
 
@@ -48,6 +49,7 @@ Run `PR Glow: Set Bitbucket Credentials` and enter your Bitbucket username and a
 | `PR Glow: Sign in to GitHub` | Authenticate via VS Code's GitHub provider |
 | `PR Glow: Set Bitbucket Credentials` | Store your Bitbucket username and app password |
 | `PR Glow: Open Pull Request in Browser` | Open the detected PR (same as clicking the status bar item) |
+| `PR Glow: Open File Diff vs PR Base` | Diff the current file against its content at the PR base |
 
 ## Settings
 
