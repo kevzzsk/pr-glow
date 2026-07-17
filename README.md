@@ -4,6 +4,27 @@ JetBrains IDEA-style pull request highlighting for VS Code. When you check out a
 
 > Screenshot/GIF placeholder — add a capture of the purple gutter stripe on a PR branch here.
 
+## Features
+
+- **Automatic PR detection** — checkout a branch, and if it has an open PR, highlights appear; no clicking around
+- **JetBrains-style purple gutter stripes** on every line the PR added or modified, with dark/light theme variants
+- **GitHub + Bitbucket Cloud** support, inferred from your git remote (GitHub Enterprise via one setting)
+- **Offline-friendly** — changed lines come from local `git diff`, with the provider's diff API as fallback
+- **Status bar PR item** — see the PR number at a glance, click to open it in the browser
+- **Overview ruler marks** so changed regions are visible in the scrollbar
+
+## Installation
+
+Not yet on the Marketplace — install from the packaged `.vsix`:
+
+```bash
+npm install
+npm run package
+code --install-extension pr-glow-0.1.0.vsix
+```
+
+Or press **F5** with this folder open in VS Code to try it in the Extension Development Host.
+
 ## How it works
 
 1. On startup, on every branch checkout (`.git/HEAD` is watched), and on manual refresh, the extension reads your repo's remote (`origin` by default).
